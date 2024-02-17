@@ -1,6 +1,8 @@
 # BLACKRAY
-Raytracing code in non-Kerr spacetime with a convolver to obtain a full relativistic reflection spectrum using the XILLVER FITS file.
+Raytracing code in non-Kerr spacetime with a convolver to obtain a full relativistic reflection spectrum using the XILLVER FITS file.  
 
+Cite the code: [![DOI](https://zenodo.org/badge/670981775.svg)](https://zenodo.org/doi/10.5281/zenodo.10673858)  
+  
 The current version calculates iron line profiles and full reflection spectra of infinitesimally-thin Novikov-Thorne disks in the Johannsen spacetime with deformation parameters $\alpha_{13}$, $\alpha_{22}$, $\alpha_{52}$, and $\epsilon_3$ (higher order deformation parameters are assumed to vanish). The Kerr solution is recovered for $\alpha_{13} = \alpha_{22} = \alpha_{52} = \epsilon_3 = 0$.
 
 To run the code, we provide the Python script run.py. Before running the Python script, it is necessary to specify the location of the XILLVER table (line 9 in run.py) as well as all the parameters of the model (lines 10-23 in run.py). The parameters rstep and pstep regulate the resolution of the image of the observer and, in turn, the number of photons to fire to the disk. The default values are rstep = $1.008$ and pstep = $2\pi/720$, which should work for most situations. In the case you want to calculate spectra for the next generation of X-ray missions (e.g., eXTP or Athena), you may have to increase the resolution (e.g., rstep = $1.0001$ and pstep = $2\pi/3600$).
