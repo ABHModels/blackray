@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     
     /*** thin disk parameters  ***/
 	xin = isco;    /* inner radius of the accretion disk; set isco */
-	xout = 400;    /* outer radius of the accretion disk */
+	xout = 500;    /* outer radius of the accretion disk */
 		
 	/* ----- Set computational parameters ----- */
 	
@@ -86,11 +86,11 @@ int main(int argc, char *argv[])
 	/*Iron line output file*/
 	//sprintf(filename_o,"iron_a%.03f.epsilon_r%.02f.epsilon_t%.02f.i%.02f.dat",spin,epsi3,iobs_deg);
     // sprintf(filename_o,"ironline_data/iron_a%.05Le.i%.02Le.e_%.02Le.a13_%.02Le.a22_%.02Le.a52_%.02Le.dat",spin,iobs_deg,epsi3,a13,a22,a52);
-    sprintf(filename_o,"ironline_data/iron_a_%.05Lf_i_%.05Lf_e_%.05Lf_a13_%.05Lf_a22_%.05Lf_a52_%.05Lf.dat",spin,iobs_deg,epsi3,a13,a22,a52);
+    snprintf(filename_o, sizeof(filename_o), "ironline_data/iron_a_%.05Lf_i_%.05Lf_e_%.05Lf_a13_%.05Lf_a22_%.05Lf_a52_%.05Lf.dat",spin,iobs_deg,epsi3,a13,a22,a52);
 	
     /*photon data output file*/
     // sprintf(filename_o2,"coord_a%.03f.epsilon_r%.02f.epsilon_t%.02f.i%.02f.dat",spin,epsi3,iobs_deg);
-    sprintf(filename_o2,"data/photons_data_a%.05Lf_i_%.05Lf_e_%.05Lf_a13_%.05Lf_a22_%.05Lf_a52_%.05Lf.dat",spin,iobs_deg,epsi3,a13,a22,a52);
+    snprintf(filename_o2, sizeof(filename_o2), "data/photons_data_a%.05Lf_i_%.05Lf_e_%.05Lf_a13_%.05Lf_a22_%.05Lf_a52_%.05Lf.dat",spin,iobs_deg,epsi3,a13,a22,a52);
 	
     foutput_coord = fopen(filename_o2,"w");
 	

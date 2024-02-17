@@ -3,10 +3,12 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 
 using namespace std;
 
-#define N_ENER_CONV  4096  // number of bins for the convolution, not that it needs to follow 2^N because of the FFT
+#define N_ENER_CONV  5000 // number of bins for the convolution, not that it needs to follow 2^N because of the FFT
 #define EMIN_RELXILL 0.00035  // minimal energy of the convolution (in keV)
 #define EMAX_RELXILL 2000.0
 
@@ -17,16 +19,19 @@ void get_local_spec(double **xill_spec, double *local_spec, double ctheta, int n
 double trapz(double* ener, double* photar);
 
 double Incl[] = {18.194874, 31.788328, 41.409622, 49.458397, 56.632984, 63.256313, 69.51268, 75.522484, 81.37307, 87.13402};
-int xill_n_incl = 10, xill_n_ener = 2999;
-const int number_of_bins = 5000;
+const int xill_n_incl = 10, xill_n_ener = 2999;
+const int number_of_bins = N_ENER_CONV;
 int len_count = 0;
 double iobs;
+
+
+
 
 int main(int argc, char *argv[]) {
 
 	double iobs_deg;
 	double lxi;
-	double max_energy = 300;  // in keV
+	double max_energy = EMAX_RELXILL;  // in keV
 	double alpha = -3.0;
 	double rstep;
 
@@ -50,13 +55,15 @@ int main(int argc, char *argv[]) {
 
     /*------------Reading xillver data file------------*/
 
-	double **xill_spec, *xill_energy;
+	double **xill_spec, *xill_energy, *xill_spec_new;
 
+	// xill_spec_new = (double *) malloc(xill_n_ener * sizeof(double));
 	xill_spec = (double**) malloc(xill_n_incl*sizeof(double*));
 	for (int ii = 0; ii < xill_n_incl; ii++) {
 		xill_spec[ii] = (double *) malloc(xill_n_ener * sizeof(double));
 	}
 	xill_energy = (double *) malloc((xill_n_ener + 1) * sizeof(double));
+	double Emax_xill;
 
 
 	FILE *xillver_data = fopen(xillver_file, "r");
@@ -68,13 +75,13 @@ int main(int argc, char *argv[]) {
     
     for (int i = 0; i < xill_n_incl ; i++) {
     	for (int j = 0; j < xill_n_ener; j++) {
+	        // fscanf(xillver_data, "%lf %lf %lf\n", &xill_energy[j], &Emax_xill,  &xill_spec_new[j]);
 	        fscanf(xillver_data, "%lf %lf\n", &xill_energy[j], &xill_spec[i][j]);
-	        // if (i == 0 && j < 10)
-	        //     printf("%lf %lf\n", xill_energy[j], xill_spec[i][j]);
-	        // xill_spec[i][j] *= 0.5*cos(iobs_deg*M_PI/180);  // comment out
+
 	    }
     }
-    xill_energy[xill_n_ener] = xill_energy[xill_n_ener-1] + (xill_energy[xill_n_ener-1] - xill_energy[xill_n_ener-2]);
+    // xill_energy[xill_n_ener] = Emax_xill;
+	xill_energy[xill_n_ener] = xill_energy[xill_n_ener-1] + (xill_energy[xill_n_ener-1] - xill_energy[xill_n_ener-2]);
 
     fclose(xillver_data);
 
@@ -91,12 +98,11 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < number_of_bins; i++)
     {
 		N_obs[i] = 0.0;
-		E_obs[i] = pow(10, (i*(log10(max_energy) + 1)/4999 - 1));	
         local_numflux[i] = 0.0;
     }
-    E_obs[number_of_bins] = E_obs[number_of_bins-1] + (E_obs[number_of_bins-1] - E_obs[number_of_bins-2]) / 2.0;
 
-	// double **local_spec = (double**) malloc(xill_n_incl*sizeof(double*));
+    get_log_grid(E_obs, number_of_bins+1, EMIN_RELXILL, EMAX_RELXILL);
+
 	double *local_spec = (double *) malloc(number_of_bins * sizeof(double));
 	double *xill_spec_interpolated = (double *) malloc(xill_n_ener * sizeof(double));
 
@@ -127,7 +133,7 @@ int main(int argc, char *argv[]) {
 		r = r_disk;
 		g = gfactor;
 		ctheta = cosne;
-		// ctheta = cos(iobs);
+		ctheta = cos(iobs);
 		rsquare = xobs*xobs + yobs*yobs;
 		get_local_spec(xill_spec, xill_spec_interpolated, ctheta, xill_n_ener);
 		rebin_spectrum(E_obs, local_spec, number_of_bins, xill_energy, xill_spec_interpolated, xill_n_ener);
@@ -135,9 +141,9 @@ int main(int argc, char *argv[]) {
 	    /*--------conv start------------*/
 		for (int j = 0; j < number_of_bins; j++)
 		{
-			elocal = E_obs[j];
-			// llocal = local_spec[j] / pow(10,lxi) / E_obs[j];
-			llocal = local_spec[j] / E_obs[j];
+			elocal = 0.5*(E_obs[j+1]+E_obs[j]);
+			llocal = local_spec[j] / pow(10,lxi) / (E_obs[j+1]-E_obs[j]);
+			// llocal = xill_spec_new[j] / (E_obs[j+1]-E_obs[j]);
 			// printf(" %d, %d, %lf\n", i, j, llocal);
 
 			local_numflux[j] += llocal;
@@ -145,9 +151,10 @@ int main(int argc, char *argv[]) {
 			pp = g*elocal;
 			qq = (g*g)*pow(r, alpha);
 
-			if(pp >= 0.1 && pp<= max_energy)
+			if(pp >= EMIN_RELXILL && pp<= max_energy)
 			{
-				k = floor(4999*(log10(pp) + 1)/(log10(max_energy) + 1));
+				//k = floor(4999*(log10(pp) + 1)/(log10(max_energy) + 1));
+				k = (log(pp) - log(E_obs[0]))/(log(E_obs[1])-log(E_obs[0]));
 				N_obs[k] = N_obs[k] + llocal*qq*rsquare*rstep2;
 			}
 		}
@@ -178,13 +185,13 @@ int main(int argc, char *argv[]) {
 
 	/*------------writing the full spectrum------------------*/
 
-	// printf(" 3\n");
 	FILE *foutput;
 	foutput = fopen(out_file, "w");
 
-	for (int i = 0; i < number_of_bins - 1; i++)
+	for (int i = 0; i < number_of_bins; i++)
 	{
-	    fprintf(foutput, "%.10lf %.10lf\n", E_obs[i], N_obs[i]*Q0/Q1);
+		//xspec format
+	    fprintf(foutput, "%.10lf %.10lf %le\n", E_obs[i],E_obs[i+1], (E_obs[i+1]-E_obs[i])*N_obs[i]);
 	}
 	fclose(foutput);
 
@@ -192,6 +199,7 @@ int main(int argc, char *argv[]) {
 	free(N_obs);
 	free(local_numflux);
 	free(n_local_numflux);
+
 	for (int ii = 0; ii < xill_n_incl; ii++) {
 		free(xill_spec[ii]);
 	}
@@ -266,36 +274,6 @@ void rebin_spectrum(double* ener, double* flu, int nbins, double* ener0, double*
 
 }
 
-// double get_local_spec(double **xill_spec, double ctheta, int i) {
-// 	int ind;
-// 	double c2 = ctheta;
-// 	if (ctheta < 0.05) {
-// 		ind = 8;
-// 		ctheta = 0.05;
-// 	}
-// 	else if (ctheta > 0.95) {
-// 		ctheta = 0.95;
-// 		ind = 0;
-// 	}
-// 	else {
-// 		// int n, n2;
-// 		// n = (int)((ctheta - 0.05) / 0.1) + 1;
-// 		// n2 = 10 - ((int)((ctheta - 0.05) / 0.1) + 1);
-// 		ind = 10 - ((int)((ctheta - 0.05) / 0.1) + 1) - 1;
-// 	}
-
-
-
-// 	double frac = (acos(ctheta) - acos(Incl[ind])) / (acos(Incl[ind + 1]) - acos(Incl[ind]));
-// 	assert(frac <= 1);
-// 	// if (frac > 1 || frac < 0)
-// 	// 	printf(" frac=%lf, ind=%d %lf %lf %lf %lf %lf\n", frac, ind, ctheta, c2, acos(ctheta), acos(Incl[ind]), acos(Incl[ind+1]));
-// 	assert(frac >= 0);
-// 	return xill_spec[ind][i] + frac * (xill_spec[ind + 1][i] - xill_spec[ind][i]);
-
-// }
-
-// double Incl[] = {18.194874, 31.788328, 41.409622, 49.458397, 56.632984, 63.256313, 69.51268, 75.522484, 81.37307, 87.13402};
 
 void get_local_spec(double **xill_spec, double *local_spec, double ctheta, int nbins) {
 	double theta = fabs(acos(fabs(ctheta))) * 180.0 / M_PI;

@@ -10,7 +10,6 @@ using namespace std;
 
 #define imax 400
 
-
 const long double Pi = acos(-1.0);
 
 long double xobs, yobs;
@@ -19,14 +18,7 @@ long double spin;
 long double iobs_deg;
 int phicount;
 
-/*---Also set computataional parameters of polish doughnut (Shafqat)*/
-/* If I want to change the spin of the BH, then I have to change these four parameters below */
-long double wcusp; /* The value of effective potential calculated corresponding to the cusp surface. This is calculated by mathematica code named "combined.nb" */
-long double angm_disk;     /* Angular momentum per unit energy of the disk which remains constant (because of considering constant angular momentum disk). also calculated by "combined.nb"*/
-long double disk_length; /* length of the disk. Also calculated from "combined.nb"*/ 
-long double disk_inner_edge; /* the radial distance from BH to the position of cusp also calculated by "combined.nb" */
 /*-----------------------------------------------------------*/
-
 
 void raytrace(long double xobs, long double yobs, long double iobs, long double xin, long double disk_length_combined ,long double traces[], int& stop_integration);
 void diffeqs(long double b, long double vars[], long double diffs[]);
@@ -44,10 +36,7 @@ void find_isco(long double z1, long double& isco);
 #include "metric.cpp"
 #include "raytracingnew.cpp"
 #include "redshift.cpp"
-//#include "redshift_polish_doughnut.cpp" /*shafqat*/
-//#include "polish_doughnut.cpp"          /*Shafqat*/
-//#include "emission_angle_rth.cpp"       /*shafqat*/
-#include "find_isco.cpp"                /*shafqat*/
-#include "metric_rderivatives.cpp"      /*shafqat*/
+#include "find_isco.cpp"
+#include "metric_rderivatives.cpp"
 
 #endif
